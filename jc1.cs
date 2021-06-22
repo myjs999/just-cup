@@ -113,6 +113,11 @@ namespace epsizizyS_sharp_
                 d.AddRange(c.d);
                 type.AddRange(c.type);
             }
+            public void Add(string s)
+            {
+                d.Add(s);
+                type.Add("string");
+            }
         }
         Dictionary<string, Cup> V = new Dictionary<string, Cup>();
         Dictionary<string, int> funcHi = new Dictionary<string, int>();
@@ -501,12 +506,26 @@ namespace epsizizyS_sharp_
                     return new Cup(hi, c.d[0].Length < c.d[1].Length ? 1 : 0);
                 }
             }
-            /*if(ch == "strlen")
+            if (ch == "==")
+            {
+                Cup c = Run(hi + 1, fbd); hi = c.hi;
+                if (fbd == 1) return c;
+                if (c.type[0] != c.type[1]) return new Cup(hi, 0);
+                if (c.d[0] != c.d[1]) return new Cup(hi, 0);
+                return new Cup(hi, 1);
+            }
+            /*if(ch == "===")
+            {
+                Cup p =  Run(hi + 1, fbd);
+                Cup q = Run(p.hi + 1, fbd);
+                if (fbd == 1) return c;
+            }*/
+            if(ch == "strlen")
             {
                 Cup c = Run(hi + 1, fbd); hi = c.hi;
                 return new Cup(hi, c.d[0].Length);
-            }*/
-            if(ch == "def" || ch == "func")
+            }
+            if (ch == "def" || ch == "func")
             {
                 string funcnam =bedStack+ h[hi + 1];
                 funcParamNam[funcnam] = new List<string>();
@@ -524,7 +543,7 @@ namespace epsizizyS_sharp_
             }
             if(funcHi.ContainsKey(ch))
             {
-                Cup p = Run(hi + 1, fbd);
+                Cup p = (funcParamNam[ch].Count==0?new Cup (hi):Run(hi + 1, fbd));
                 if (fbd == 1) return new Cup(p.hi);
                 string obedstack = bedStack;
                 bedStack += ch + ".";
@@ -611,6 +630,18 @@ namespace epsizizyS_sharp_
                 for (int i = st; (st<=ed?i < ed:i>ed); i += step) ret.Add(new Cup(-1, i));
                 return new Cup(p.hi, ret);
             }
+            if(ch == "count" || ch == "length" || ch == "size")
+            {
+                Cup p = Run(hi + 1, fbd);
+                return new Cup(p.hi, p.d.Count);
+            }
+            if(ch == "partial")
+            {
+                Cup p = Run(hi + 1, fbd);
+                Cup q = Run(p.hi + 1, fbd);
+                return new Cup(-1, "myjs999 please code on");
+                // FROMHERE
+            }
             if(ch == "in")
             {
                 return Run(hi + 1, fbd);
@@ -668,9 +699,38 @@ namespace epsizizyS_sharp_
             {
                 Cup p = Run(hi + 1, fbd);
                 if (fbd == 1) return new Cup(p.hi);
-                parseRet += p.d[0];
+                foreach (var s in p.d) parseRet += s+" ";
+                parseRet= parseRet.Remove(parseRet.Length - 1);
                 return new Cup(p.hi + 1);
             }
+            if(ch == "split")
+            {
+                Cup p = Run(hi + 1, fbd);
+                if (fbd == 1) return new Cup(p.hi);
+                Cup ret = new Cup(p.hi);
+                string s = p.d[0];
+                int st = 0;
+                for(int i = 0; i < s.Length-p.d[1].Length+1; i++)
+                {
+                    if(s.Substring(i, p.d[1].Length) == p.d[1])
+                    {
+                        ret.Add(s.Substring(st, i - st));
+                        ret.Add(p.d[1]);
+                        st = i + p.d[1].Length;
+                        i += p.d[1].Length;
+                    }
+                }
+                ret.Add(s.Substring(st, s.Length - st));
+                ret.d = RemoveEmpty(ret.d);
+                /*
+                char[] spliter = p.d[1].ToCharArray();
+                List<string> tmp =  p.d[0].Split(spliter).ToList();
+                Cup ret = new Cup(p.hi);
+                foreach (var e in tmp) ret.Add(new Cup(p.hi, e));
+                */
+                return ret;
+            }
+
             return new Cup(hi);
         }
         public string randstring()
