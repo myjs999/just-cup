@@ -23,7 +23,7 @@ namespace epsizizyS_sharp_
         private void button1_Click(object sender, EventArgs e)
         {
             string os = richTextBox1.Text;
-            jc.Parse(os);
+            richTextBox2.Text = jc.Parse(os);
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -34,7 +34,7 @@ namespace epsizizyS_sharp_
         private void 运行ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             string os = richTextBox1.Text;
-            jc.Parse(os);
+            richTextBox2.Text = jc.Parse(os);
         }
     }
     public class JustCup
@@ -607,8 +607,8 @@ namespace epsizizyS_sharp_
                 if (fbd == 1) return new Cup(p.hi);
                 Cup ret = new Cup();
                 int st = ToInt(p.d[0]), ed = ToInt(p.d[1]), step;
-                if (p.d.Count >= 3) step = ToInt(p.d[2]); else step = 1;
-                for (int i = st; i < ed; i += step) ret.Add(new Cup(-1, i));
+                if (p.d.Count >= 3) step = ToInt(p.d[2]); else step = (st <= ed ? 1 : -1);
+                for (int i = st; (st<=ed?i < ed:i>ed); i += step) ret.Add(new Cup(-1, i));
                 return new Cup(p.hi, ret);
             }
             if(ch == "in")
@@ -664,6 +664,13 @@ namespace epsizizyS_sharp_
                 File.Delete(p.d[0]);
                 return new Cup(p.hi + 1);
             }
+            if(ch == "print")
+            {
+                Cup p = Run(hi + 1, fbd);
+                if (fbd == 1) return new Cup(p.hi);
+                parseRet += p.d[0];
+                return new Cup(p.hi + 1);
+            }
             return new Cup(hi);
         }
         public string randstring()
@@ -677,7 +684,8 @@ namespace epsizizyS_sharp_
         {
             return Convert.ToInt32(s);
         }
-        public void Parse(string os)
+        string parseRet = "";
+        public string Parse(string os)
         {
             //string core = "def getcurfiles() getfiles(getcurpath,\"*\")\r\n";
             char[] s = new char[100000]; int sn = 0;
@@ -709,14 +717,16 @@ namespace epsizizyS_sharp_
             h = new List<string> { "begin" };
             h.AddRange(hh);
             //foreach (var hs in h) Debug(hs);
-           // try
-           // {
+            // try
+            // {
+            parseRet = "";
                 Run(0, 0);
-           // }
-           // catch
-           // {
+            // }
+            // catch
+            // {
 
-           // }
+            // }
+            return parseRet;
         }
     }
 }
