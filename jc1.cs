@@ -115,13 +115,29 @@ namespace epsizizyS_sharp_
         }
         Dictionary<string, Cup> V = new Dictionary<string, Cup>();
         Dictionary<string, int> funcHi = new Dictionary<string, int>();
+        Dictionary<string, int> classHi = new Dictionary<string, int>();
         Dictionary<string, List<string>> funcParamNam = new Dictionary<string, List<string>>();
         List<Cup> paramStack = new List<Cup>();
         string bedStack = "";
+        int[] intarr = new int[100000000];
+        char[] chararr = new char[100000000];
+        string[] stringarr = new string[1000000];
+
         /*
          * 1. 完善bed功能，包括begin、param、if等。
          */
 
+        string prevBed(string s)
+        {
+            for(int i = s.Length-2; i >= 0; i--)
+            {
+                if (s[i] == '.')
+                {
+                    return s.Substring(0, i+1);
+                }
+            }
+            return "";
+        }
         public void Debug(object obj)
         {
             MessageBox.Show(obj.ToString());
@@ -278,6 +294,14 @@ namespace epsizizyS_sharp_
                     return q;
                 }
             }
+            string cbs = bedStack;
+            for(; ;)
+            {
+                if (V.ContainsKey(cbs + ch)) return new Cup(hi, V[cbs + ch]);
+                if (cbs == "") break;
+                cbs = prevBed(cbs);
+            }
+            /*
             if(V.ContainsKey(bedStack+ch)) // this must be ahead of the next one
             {
                 return new Cup(hi, V[bedStack+ ch]);
@@ -285,7 +309,7 @@ namespace epsizizyS_sharp_
             if(V.ContainsKey(ch))
             {
                 return new Cup(hi, V[ch]);
-            }
+            }*/
             if(ch == "+" || ch == "sum")
             {
                 Cup c = Run(hi + 1, fbd); hi = c.hi;
@@ -473,14 +497,49 @@ namespace epsizizyS_sharp_
                 //paramStack.RemoveAt(paramStack.Count - 1);
                 return new Cup(p.hi, q);
             }
-            
+            if(ch == "class")
+            {
+                string classnam = bedStack + h[hi + 1];
+                classHi[classnam] = hi + 2;
+                Cup tmp = Run(hi + 2, 1);
+                return new Cup(tmp.hi);
+            }
+            if(classHi.ContainsKey(ch))
+            {
+                string varnam = h[hi + 1];
+                if (fbd == 1) return new Cup(hi + 1);
+                string obs = bedStack;
+                bedStack += h[hi + 1] + "."; // this is the difference
+                Cup q = Run(classHi[ch], fbd);
+                bedStack = obs;
+                V[varnam] = q; // WOW
+                return new Cup(hi + 1, q);
+            }
+            if(ch == "@" || ch == "at") // 【不推荐使用。】
+            {
+                Cup p = Run(hi + 1, fbd); // 为了彰显这不是普通的函数我们不使用一般的函数参数表示法
+                Cup q = Run(p.hi + 1, fbd);
+                return new Cup(q.hi, q.d[Convert.ToInt32(p.d[0])]);
+            }
+            if(ch == "setintarr")
+            {
+                Cup p = Run(hi + 1, fbd);
+                Cup q = Run(p.hi + 1, fbd);
+                intarr[Convert.ToInt32(p.d[0])] = Convert.ToInt32(q.d[0]);
+                return new Cup(q.hi);
+            }
+            if(ch == "getintarr") // 用已有的东西应该能写出好用的数组吧！
+            {
+                Cup p = Run(hi + 1, fbd);
+                return new Cup(p.hi, intarr[Convert.ToInt32(p.d[0])]);
+            }
             return new Cup(hi);
         }
 
         public void Parse(string os)
         {
             char[] s = new char[100000]; int sn = 0;
-            List<char> dict = new List<char> {'(',')','{','}','[',']'/*,'+','-','*','/','&','^','%','!','<','>','=','|' */};
+            List<char> dict = new List<char> {'(',')','{','}','[',']','@'/*,'+','-','*','/','&','^','%','!','<','>','=','|' */};
             for(int i = 0; i  < os.Length; i++)
             {
                 if (dict.Contains(os[i]))
