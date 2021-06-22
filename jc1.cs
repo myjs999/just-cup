@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.IO;
 
 namespace epsizizyS_sharp_
 {
@@ -376,7 +377,7 @@ namespace epsizizyS_sharp_
                     return new Cup(hi, "Lord, you wanna get the division of some strings?");
                 }
             }
-            if (ch == "^" || ch == "xor")
+            if (ch == "^" || ch == "bitxor")
             {
                 Cup c = Run(hi + 1, fbd); hi = c.hi;
                 if (fbd == 1) return c;
@@ -394,6 +395,46 @@ namespace epsizizyS_sharp_
                 if (type == "string")
                 {
                     return new Cup(hi, "Lord, you wanna get the XOR of some strings?");
+                }
+            }
+            if (ch == "&" || ch == "bitand")
+            {
+                Cup c = Run(hi + 1, fbd); hi = c.hi;
+                if (fbd == 1) return c;
+                string type = "int";
+                for (int i = 0; i < c.d.Count; i++)
+                {
+                    if (c.type[i] == "string") type = "string";
+                }
+                if (type == "int")
+                {
+                    int prod = 0;
+                    for (int i = 0; i < c.d.Count; i++) prod &= Convert.ToInt32(c.d[i]);
+                    return new Cup(hi, prod);
+                }
+                if (type == "string")
+                {
+                    return new Cup(hi, "Lord, you wanna get the & of some strings?");
+                }
+            }
+            if (ch == "|" || ch == "bitor")
+            {
+                Cup c = Run(hi + 1, fbd); hi = c.hi;
+                if (fbd == 1) return c;
+                string type = "int";
+                for (int i = 0; i < c.d.Count; i++)
+                {
+                    if (c.type[i] == "string") type = "string";
+                }
+                if (type == "int")
+                {
+                    int prod = 2147483647;
+                    for (int i = 0; i < c.d.Count; i++) prod |= Convert.ToInt32(c.d[i]);
+                    return new Cup(hi, prod);
+                }
+                if (type == "string")
+                {
+                    return new Cup(hi, "Lord, you wanna get the | of some strings?");
                 }
             }
             if (ch == "%" || ch == "mod")
@@ -533,11 +574,112 @@ namespace epsizizyS_sharp_
                 Cup p = Run(hi + 1, fbd);
                 return new Cup(p.hi, intarr[Convert.ToInt32(p.d[0])]);
             }
+
+            // 牛逼的字符串处理能力
+            if(ch == "for")
+            {
+                string fornam = h[hi + 1];
+                Cup p = Run(hi + 2, fbd);
+                int finalhi = Run(p.hi + 1, 1).hi;
+                if (fbd == 1) return new Cup(finalhi);
+                else
+                {
+                    Cup ret = new Cup();
+                    for (int i = 0; i < p.d.Count; i++)
+                    {
+                        V[bedStack + fornam] = new Cup(p.d[i], p.type[i]);
+                        ret.Add(Run(p.hi + 1, fbd));
+                        p.d[i] = V[bedStack + fornam].d[0]; // WOW
+                        p.type[i] = V[bedStack + fornam].type[0];
+                    }
+                    return ret;
+                }
+            }
+            if(ch == "rev" || ch == "reverse")
+            {
+                Cup p = Run(hi + 1, fbd);
+                p.d.Reverse(); p.type.Reverse();
+                return p;
+            }
+            if(ch == "range")
+            {
+                Cup p = Run(hi + 1, fbd);
+                if (fbd == 1) return new Cup(p.hi);
+                Cup ret = new Cup();
+                int st = ToInt(p.d[0]), ed = ToInt(p.d[1]), step;
+                if (p.d.Count >= 3) step = ToInt(p.d[2]); else step = 1;
+                for (int i = st; i < ed; i += step) ret.Add(new Cup(-1, i));
+                return new Cup(p.hi, ret);
+            }
+            if(ch == "in")
+            {
+                return Run(hi + 1, fbd);
+            }
+            if(ch == "getfiles")
+            {
+                Cup ad = Run(hi + 1, fbd);
+                if (fbd == 1) return new Cup(ad.hi);
+                List<string> rets = new List<string>(Directory.GetFiles(ad.d[0], ad.d[1]));
+                Cup ret = new Cup();
+                foreach(var s in rets)
+                {
+                    ret.Add(new Cup(-1, s));
+                }
+                return new Cup(ad.hi, ret);
+            }
+            if(ch == "getcurrentpath")
+            {
+                return new Cup(hi, Directory.GetCurrentDirectory());
+            }
+            if(ch == "copy")
+            {
+                Cup p = Run(hi + 1, fbd);
+                if (fbd == 1) return new Cup(p.hi);
+                File.Copy(p.d[0], p.d[1]);
+                return new Cup(p.hi + 1);
+            }
+            if(ch == "delete")
+            {
+                Cup p = Run(hi + 1, fbd);
+                if (fbd == 1) return new Cup(p.hi);
+                File.Delete(p.d[0]);
+                return new Cup(p.hi + 1);
+            }
+            if(ch == "exist")
+            {
+                Cup p = Run(hi + 1, fbd);
+                if (fbd == 1) return new Cup(p.hi);
+                return new Cup(p.hi + 1, File.Exists(p.d[0])?1:0);
+            }
+            if(ch == "randstring")
+            {
+                return new Cup(hi, randstring());
+            }
+            if(ch == "rename")
+            {
+                Cup p = Run(hi + 1, fbd);
+                if (fbd == 1) return new Cup(p.hi);
+                if (File.Exists(p.d[1])) p.d[1]+= randstring();
+                File.Copy(p.d[0], p.d[1]);
+                File.Delete(p.d[0]);
+                return new Cup(p.hi + 1);
+            }
             return new Cup(hi);
         }
-
+        public string randstring()
+        {
+            Random rand = new Random();
+            string ret = "";
+            for (int i = 0; i < 16; i++) ret += (char)rand.Next('a', 'z' + 1);
+            return ret;
+        }
+        public int ToInt(string s)
+        {
+            return Convert.ToInt32(s);
+        }
         public void Parse(string os)
         {
+            //string core = "def getcurfiles() getfiles(getcurpath,\"*\")\r\n";
             char[] s = new char[100000]; int sn = 0;
             List<char> dict = new List<char> {'(',')','{','}','[',']','@'/*,'+','-','*','/','&','^','%','!','<','>','=','|' */};
             for(int i = 0; i  < os.Length; i++)
@@ -548,6 +690,7 @@ namespace epsizizyS_sharp_
                     s[sn++] = os[i];
                     s[sn++] = ' ';
                 }
+                else if (os[i] == ',') s[sn++] = ' ';
                 else s[sn++] = os[i];
             }
             //Debug("SN = " + sn);
