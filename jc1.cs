@@ -60,7 +60,7 @@ namespace epsizizyS_sharp_
             foreach (var hi in h) if (hi.Length > 0)
                 {
                     int st = 0, ed = hi.Length - 1;
-                    ret.Add(hi);
+                    ret.Add(hi);//
                 }
                     
             return ret;
