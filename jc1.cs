@@ -60,7 +60,7 @@ namespace epsizizyS_sharp_
             foreach (var hi in h) if (hi.Length > 0)
                 {
                     int st = 0, ed = hi.Length - 1;
-                    ret.Add(hi);//
+                    ret.Add(hi);
                 }
                     
             return ret;
@@ -168,8 +168,8 @@ namespace epsizizyS_sharp_
         Cup Run(int hi, int fbd)
         {
             string ch = h[hi]; // don't modify!!!
-            //Debug("HI = " + hi + " CH " + ch);
-            //Debug(ch);
+           // Debug("HI = " + hi + " CH " + ch);
+           // Debug(ch);
             if (ch == "begin" || ch == "{" || ch == "seq")
             {
                 ++hi;
@@ -750,20 +750,20 @@ namespace epsizizyS_sharp_
                 Cup p = Run(hi + 1, fbd);
                 if (fbd == 1) return new Cup(p.hi);
                 File.Copy(p.d[0], p.d[1]);
-                return new Cup(p.hi + 1);
+                return new Cup(p.hi );
             }
             if(ch == "delete")
             {
                 Cup p = Run(hi + 1, fbd);
                 if (fbd == 1) return new Cup(p.hi);
                 File.Delete(p.d[0]);
-                return new Cup(p.hi + 1);
+                return new Cup(p.hi );
             }
             if(ch == "exist")
             {
                 Cup p = Run(hi + 1, fbd);
                 if (fbd == 1) return new Cup(p.hi);
-                return new Cup(p.hi + 1, File.Exists(p.d[0])?1:0);
+                return new Cup(p.hi , File.Exists(p.d[0])?1:0);
             }
             if(ch == "randstring")
             {
@@ -776,7 +776,7 @@ namespace epsizizyS_sharp_
                 if (File.Exists(p.d[1])) p.d[1]+= randstring();
                 File.Copy(p.d[0], p.d[1]);
                 File.Delete(p.d[0]);
-                return new Cup(p.hi + 1);
+                return new Cup(p.hi );
             }
             if(ch == "print")
             {
@@ -784,7 +784,7 @@ namespace epsizizyS_sharp_
                 if (fbd == 1) return new Cup(p.hi);
                 foreach (var s in p.d) parseRet += s+" ";
                 if(parseRet.Length > 0) parseRet= parseRet.Remove(parseRet.Length - 1);
-                return new Cup(p.hi + 1);
+                return new Cup(p.hi);
             }
             if(ch == "split")
             {
