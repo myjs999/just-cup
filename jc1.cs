@@ -133,6 +133,8 @@ namespace epsizizyS_sharp_
             }
         }
         Dictionary<string, Cup> V = new Dictionary<string, Cup>();
+        Dictionary<string, int> arrayDi = new Dictionary<string, int>();
+        Dictionary<string, List<int>> arrayShape = new Dictionary<string, List<int>>();
         Dictionary<string, int> funcHi = new Dictionary<string, int>();
         Dictionary<string, int> classHi = new Dictionary<string, int>();
         Dictionary<string, List<string>> funcParamNam = new Dictionary<string, List<string>>();
@@ -141,6 +143,8 @@ namespace epsizizyS_sharp_
         int[] intarr = new int[100000000];
         char[] chararr = new char[100000000];
         string[] stringarr = new string[1000000];
+        Cup[] arrayData = new Cup[100000000];
+        int arrayDataUsedCount = 0;
 
         /*
          * 1. 完善bed功能，包括begin、param、if等。
@@ -298,14 +302,57 @@ namespace epsizizyS_sharp_
                 }
                 return new Cup(hi + 1);
             }
+            if(ch == "array")
+            {
+                string arrayNam =bedStack+ h[hi + 1];
+                Cup shape = Run(hi + 2, fbd);
+                int size = 1;
+                for (int i = 0; i < shape.d.Count; i++) size *= ToInt(shape.d[i]);
+                if (fbd == 0)
+                {
+                    arrayDi[arrayNam] = arrayDataUsedCount;
+                    arrayDataUsedCount += size;
+                    arrayShape[arrayNam] = new List<int>();
+                    for(int i = 0; i < shape.d.Count; i++)
+                    {
+                        arrayShape[arrayNam].Add(ToInt(shape.d[i]));
+                    }
+                }
+                return new Cup(shape.hi);
+                // array d[100,100]
+            }
             if(ch == "=" || ch == "set")
             {
                 if(fbd == 0)
                 {
                     string varnam =bedStack+ h[hi + 1];
-                    Cup q = Run(hi + 2, 0);
-                    V[varnam] = q;
-                    return q;
+                    if (arrayDi.ContainsKey(varnam))
+                    {
+                        Cup shape = Run(hi + 2, 0);
+                        Cup q = Run(shape.hi + 1, 0);
+                        if (shape.d.Count == 0)
+                        {
+                            arrayDi[varnam] = ToInt(q.d[0]);
+                        }
+                        else
+                        {
+                            int pos = 0;
+                            for (int i = 0; i < shape.d.Count; i++)
+                            {
+                                pos += ToInt(shape.d[i]);
+                                if (i != shape.d.Count - 1) pos *= arrayShape[varnam][i + 1];
+                            }
+                            pos += arrayDi[varnam];
+                            arrayData[pos] = q;
+                        }
+                        return q;
+                    }
+                    else
+                    {
+                        Cup q = Run(hi + 2, 0);
+                        V[varnam] = q;
+                        return q;
+                    }
                 }
                 else
                 {
@@ -316,6 +363,22 @@ namespace epsizizyS_sharp_
             string cbs = bedStack;
             for(; ;)
             {
+                if(arrayDi.ContainsKey(cbs+ch))
+                {
+                    Cup shape = Run(hi + 1, fbd);
+                    if (shape.d.Count == 0) return new Cup(shape.hi, arrayDi[cbs + ch]);
+                    else
+                    {
+                        int pos = 0;
+                        for (int i = 0; i < shape.d.Count; i++)
+                        {
+                            pos += ToInt(shape.d[i]);
+                            if (i != shape.d.Count - 1) pos *= arrayShape[cbs+ch][i + 1];
+                        }
+                        pos += arrayDi[cbs+ch];
+                        return new Cup(shape.hi, arrayData[pos]);
+                    }
+                }
                 if (V.ContainsKey(cbs + ch)) return new Cup(hi, V[cbs + ch]);
                 if (cbs == "") break;
                 cbs = prevBed(cbs);
@@ -807,6 +870,19 @@ namespace epsizizyS_sharp_
             // try
             // {
             parseRet = "";
+
+            V.Clear();
+            arrayDi.Clear();
+            arrayShape.Clear();
+            funcHi.Clear();
+            classHi.Clear();
+            funcParamNam.Clear();
+            paramStack.Clear();
+            bedStack = "";
+            //arrayData
+            arrayDataUsedCount = 0;
+
+
                 Run(0, 0);
             // }
             // catch
