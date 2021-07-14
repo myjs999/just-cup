@@ -28,7 +28,20 @@ namespace epsizizyS_sharp_
 
         private void Form1_Load(object sender, EventArgs e)
         {
-           // dbg.Parse("debug \"aaa\"");
+            // dbg.Parse("debug \"aaa\"");
+            加载核心库CoreToolStripMenuItem_Click(new object(), new EventArgs());
+        }
+
+        private void 编译ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void 加载核心库CoreToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!File.Exists("core.jc")) return;
+            string s = File.ReadAllText("core.jc");
+            richTextBox1.Text += s;
         }
 
         private void 运行ToolStripMenuItem_Click(object sender, EventArgs e)
@@ -547,7 +560,10 @@ namespace epsizizyS_sharp_
                 if (fbd == 1) return new Cup(p.hi);
                 string obedstack = bedStack;
                 bedStack += ch + ".";
-                for(int i = 0; i < funcParamNam[ch].Count; i++)
+                if(funcParamNam[ch].Count > 0 && funcParamNam[ch].Last() == "...")
+                {
+                    V[bedStack + funcParamNam[ch][0]] = p;
+                }else for (int i = 0; i < funcParamNam[ch].Count; i++)
                 {
                     V[bedStack+ funcParamNam[ch][i]] = new Cup(p.d[i], p.type[i]);
                 }
@@ -579,7 +595,11 @@ namespace epsizizyS_sharp_
             {
                 Cup p = Run(hi + 1, fbd); // 为了彰显这不是普通的函数我们不使用一般的函数参数表示法
                 Cup q = Run(p.hi + 1, fbd);
-                return new Cup(q.hi, q.d[Convert.ToInt32(p.d[0])]);
+                if (fbd == 1) return new Cup(q.hi);
+                Cup ret = new Cup(q.hi);
+                ret.d.Add(q.d[Convert.ToInt32(p.d[0])]);
+                ret.type.Add(q.type[Convert.ToInt32(p.d[0])]);
+                return ret;
             }
             if(ch == "setintarr")
             {
@@ -700,7 +720,7 @@ namespace epsizizyS_sharp_
                 Cup p = Run(hi + 1, fbd);
                 if (fbd == 1) return new Cup(p.hi);
                 foreach (var s in p.d) parseRet += s+" ";
-                parseRet= parseRet.Remove(parseRet.Length - 1);
+                if(parseRet.Length > 0) parseRet= parseRet.Remove(parseRet.Length - 1);
                 return new Cup(p.hi + 1);
             }
             if(ch == "split")
@@ -730,7 +750,14 @@ namespace epsizizyS_sharp_
                 */
                 return ret;
             }
-
+            if(ch == "inttochar")
+            {
+                Cup p = Run(hi + 1, fbd);
+                char c = (char)ToInt(p.d[0]);
+                string s = "";
+                s += c;
+                return new Cup(p.hi, s);
+            }
             return new Cup(hi);
         }
         public string randstring()
