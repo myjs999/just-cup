@@ -432,12 +432,12 @@ namespace epsizizyS_sharp_
                         //a.x或a有定义：相当于a.x有定义
                         //我想取消对全局变量的指涉了，至少是今天。
                         string allstr = bedStack + h[hi + 1];
-                        //string cstr = allstr;
-                        string curBedStack = bedStack;// prevBed(allstr);
-                        string lastVarNam = h[hi + 1];// allstr.Substring(curBedStack.Length);
-                        Debug(allstr + " -> " + curBedStack + " + " + lastVarNam);
+                        string cstr = allstr;
+                        //string curBedStack = bedStack;// prevBed(allstr);
+                        //string lastVarNam = h[hi + 1];// allstr.Substring(curBedStack.Length);
+                        //Debug(allstr + " -> " + curBedStack + " + " + lastVarNam);
                         string varnam = "";
-                        
+                        /*
                         for (; ; )
                         {
                             if (arrayDi.ContainsKey(curBedStack + lastVarNam))
@@ -454,8 +454,26 @@ namespace epsizizyS_sharp_
                             if (curBedStack == "") break;
                             Debug(curBedStack + lastVarNam + " not found, prevbed.");
                             curBedStack = prevBed(curBedStack);
+                        }*/
+                        for (; ; )
+                        {
+                            //Debug("CSTR " + cstr);
+                            if (arrayDi.ContainsKey(cstr))
+                            {
+                                varnam = allstr;
+                                break;
+                            }
+                            if (V.ContainsKey(cstr))
+                            {
+                                varnam = allstr;
+                                //Debug(varnam + " found");
+                                break;
+                            }
+                            if (!cstr.Contains(".")) break;
+                            //Debug(curBedStack + lastVarNam + " not found, prevbed.");
+                            cstr = prevBed(cstr);
+                            cstr = cstr.Remove(cstr.Length - 1);
                         }
-                       
                             if (varnam == "")
                         {
                             //Debug("Error: var " + lastVarNam + " no defined!");
@@ -479,7 +497,7 @@ namespace epsizizyS_sharp_
                             lstnam = curvn.Substring(newstr.Length, curvn.Length - newstr.Length) + lstnam;
                             curvn = newstr; // 10.25 23:31 不过是寥寥几句话的事。有什么难的？
                         }
-                        
+                        Debug("finhave " + curvn);
                         if (arrayDi.ContainsKey(varnam))
                         {
                             Cup shape = Run(hi + 2, 0);
@@ -507,6 +525,7 @@ namespace epsizizyS_sharp_
                         else
                         {
                             Cup q = Run(hi + 2, 0);
+                            Debug("I'm setting " + varnam + " to " + q.d[0]);
                             foreach (string cvarnam in eqlvarnams)
                                 V[cvarnam] = q;
                             return q;
@@ -586,9 +605,45 @@ namespace epsizizyS_sharp_
                 {
                     return new Cup(hi, ch.Substring(1, ch.Length - 1));
                 }
+                string vallstr = bedStack + ch;
+                string vcstr = vallstr;
+                for(; ;) // 全局变量さようなら
+                {
+                    if (arrayDi.ContainsKey(vcstr))
+                    {
+                        Cup shape = Run(hi + 1, fbd);
+                        if (shape.d.Count == 0) return new Cup(shape.hi, arrayDi[vallstr]);
+                        else
+                        {
+
+                            int pos = 0;
+                            for (int i = 0; i < shape.d.Count; i++)
+                            {
+                                pos += ToInt(shape.d[i]);
+                                if (i != shape.d.Count - 1) pos *= arrayShape[vallstr][i + 1];
+                            }
+
+                            pos += arrayDi[vallstr];
+                            if (arrayData[pos] == null)
+                                return new Cup(shape.hi, new Cup(-1));
+                            return new Cup(shape.hi, arrayData[pos]);
+                        }
+                    }
+                    if (V.ContainsKey(vcstr))
+                    {
+                        //Debug("V have " + vcstr+" so return "+vallstr+" as "+V[vallstr]);
+                        return new Cup(hi, V[vallstr]);
+                    }
+                    if (!vcstr.Contains(".")) break;
+                    vcstr = prevBed(vcstr);
+                    vcstr = vcstr.Remove(vcstr.Length - 1);
+                }
+                /*
                 for (; ; )
                 {
                     //if (ch == "asd") Debug("considering ch " + ch);
+                    
+                    
                     if (arrayDi.ContainsKey(cbs + ch))
                     {
                         //Debug("array detected");
@@ -624,7 +679,7 @@ namespace epsizizyS_sharp_
                     cbs = prevBed(cbs);
                     //if (ch == "asd") Debug("fuck3");
                 }
-                
+                */
                 /*
                 if(V.ContainsKey(bedStack+ch)) // this must be ahead of the next one
                 {
