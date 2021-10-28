@@ -78,7 +78,8 @@ namespace epsizizyS_sharp_
                 "{}可以用return了（只是指定返回值，不会结束{}，多个会累在一起）（这个有问题。不要用。）\r\n" +
                 "被赋值的变量现在优先考虑已经定义的（可能在外层），没定义的话再在最内层定义。\r\n" +
                 "增加了eqlvar和deqlvar\r\n" +
-                "增加了传引用参数（用了eqlvar实际上是）（但现在还不能在复合传引用函数里eqlvar。这是eqlvar的问题）（当然，一切的目的都是为了传array和class）");
+                "增加了传引用参数（用了eqlvar实际上是）（但现在还不能在复合传引用函数里eqlvar。这是eqlvar的问题）（当然，一切的目的都是为了传array和class）\r\n" +
+                "b.set(&b, &a) 这已经是完全体了！！");
         }
 
         private void 加载Windows库WindowsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -484,10 +485,10 @@ namespace epsizizyS_sharp_
                         string curvn = varnam, lstnam = "";
                         for(; ;)
                         {
-                            Debug("CURVN" + curvn);
+                          //  Debug("CURVN" + curvn);
                             if (eqlvar.ContainsKey(curvn))
                             {
-                                Debug("YEshave " + curvn);
+                               // Debug("YEshave " + curvn);
                                 foreach (string v in eqlvar[curvn]) eqlvarnams.Add(v+lstnam);
                                 break;
                             }
@@ -497,7 +498,7 @@ namespace epsizizyS_sharp_
                             lstnam = curvn.Substring(newstr.Length, curvn.Length - newstr.Length) + lstnam;
                             curvn = newstr; // 10.25 23:31 不过是寥寥几句话的事。有什么难的？
                         }
-                        Debug("finhave " + curvn);
+                       // Debug("finhave " + curvn);
                         if (arrayDi.ContainsKey(varnam))
                         {
                             Cup shape = Run(hi + 2, 0);
@@ -525,7 +526,7 @@ namespace epsizizyS_sharp_
                         else
                         {
                             Cup q = Run(hi + 2, 0);
-                            Debug("I'm setting " + varnam + " to " + q.d[0]);
+                           // Debug("I'm setting " + varnam + " to " + q.d[0]);
                             foreach (string cvarnam in eqlvarnams)
                                 V[cvarnam] = q;
                             return q;
@@ -572,7 +573,7 @@ namespace epsizizyS_sharp_
                                     V[vb] = new Cup(-1, V[va]); // 至少得穿一次参数呀！
                                 else
                                     V[vb] = new Cup(-1); // 不然一会儿以为这个变量没定义
-                                Debug("EQLVAR " + va + " " + vb);
+                               // Debug("EQLVAR " + va + " " + vb);
                             }
                             else
                             {
@@ -607,36 +608,52 @@ namespace epsizizyS_sharp_
                 }
                 string vallstr = bedStack + ch;
                 string vcstr = vallstr;
+                string vclst = "";
                 for(; ;) // 全局变量さようなら
                 {
-                    if (arrayDi.ContainsKey(vcstr))
+                    List<string> eqls = new List<string>();
+                    eqls.Add(vcstr);
+                    if (eqlvar.ContainsKey(vcstr)) foreach(string eqlpre in eqlvar[vcstr])
                     {
-                        Cup shape = Run(hi + 1, fbd);
-                        if (shape.d.Count == 0) return new Cup(shape.hi, arrayDi[vallstr]);
-                        else
+                        eqls.Add(eqlpre);
+                    }
+                    foreach (string eqlpre in eqls)
+                    {
+                        string callstr = eqlpre + vclst;
+                        //Debug("try callstr " + callstr);
+                        if (arrayDi.ContainsKey(callstr))
                         {
-
-                            int pos = 0;
-                            for (int i = 0; i < shape.d.Count; i++)
+                            Cup shape = Run(hi + 1, fbd);
+                            if (shape.d.Count == 0) return new Cup(shape.hi, arrayDi[callstr]);
+                            else
                             {
-                                pos += ToInt(shape.d[i]);
-                                if (i != shape.d.Count - 1) pos *= arrayShape[vallstr][i + 1];
-                            }
 
-                            pos += arrayDi[vallstr];
-                            if (arrayData[pos] == null)
-                                return new Cup(shape.hi, new Cup(-1));
-                            return new Cup(shape.hi, arrayData[pos]);
+                                int pos = 0;
+                                for (int i = 0; i < shape.d.Count; i++)
+                                {
+                                    pos += ToInt(shape.d[i]);
+                                    if (i != shape.d.Count - 1) pos *= arrayShape[callstr][i + 1];
+                                }
+
+                                pos += arrayDi[callstr];
+                                if (arrayData[pos] == null)
+                                    return new Cup(shape.hi, new Cup(-1));
+                                return new Cup(shape.hi, arrayData[pos]);
+                            }
+                        }
+                        if (V.ContainsKey(callstr))
+                        {
+                            //Debug("V have " + vcstr+" so return "+vallstr+" as "+V[vallstr]);
+                            return new Cup(hi, V[callstr]);
                         }
                     }
-                    if (V.ContainsKey(vcstr))
-                    {
-                        //Debug("V have " + vcstr+" so return "+vallstr+" as "+V[vallstr]);
-                        return new Cup(hi, V[vallstr]);
-                    }
+                    
+
                     if (!vcstr.Contains(".")) break;
+                    vclst = vcstr + vclst;
                     vcstr = prevBed(vcstr);
                     vcstr = vcstr.Remove(vcstr.Length - 1);
+                    vclst = vclst.Substring(vcstr.Length);
                 }
                 /*
                 for (; ; )
