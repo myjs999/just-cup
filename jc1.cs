@@ -475,6 +475,7 @@ namespace epsizizyS_sharp_
                             cstr = prevBed(cstr);
                             cstr = cstr.Remove(cstr.Length - 1);
                         }
+                        
                             if (varnam == "")
                         {
                             //Debug("Error: var " + lastVarNam + " no defined!");
@@ -483,13 +484,25 @@ namespace epsizizyS_sharp_
                         List<string> eqlvarnams = new List<string>();
                         eqlvarnams.Add(varnam);
                         string curvn = varnam, lstnam = "";
+                        string vartype = "cup";
+                        string arrayOriginNam;
                         for(; ;)
                         {
-                          //  Debug("CURVN" + curvn);
+                             //Debug("CURVN" + curvn);
                             if (eqlvar.ContainsKey(curvn))
                             {
-                               // Debug("YEshave " + curvn);
-                                foreach (string v in eqlvar[curvn]) eqlvarnams.Add(v+lstnam);
+                                
+                               //Debug("YEshave " + curvn);
+                                foreach (string v in eqlvar[curvn])
+                                {
+                                    if (arrayDi.ContainsKey(v + lstnam))
+                                    {
+                                        vartype = "array";
+                                        arrayOriginNam = v + lstnam;
+                                    }
+                                    //Debug("eql to " + v + lstnam);
+                                    eqlvarnams.Add(v + lstnam);
+                                }
                                 break;
                             }
                             if (!curvn.Contains(".")) break;
@@ -498,13 +511,17 @@ namespace epsizizyS_sharp_
                             lstnam = curvn.Substring(newstr.Length, curvn.Length - newstr.Length) + lstnam;
                             curvn = newstr; // 10.25 23:31 不过是寥寥几句话的事。有什么难的？
                         }
+                        //Debug("check varnam " + varnam);
                        // Debug("finhave " + curvn);
-                        if (arrayDi.ContainsKey(varnam))
+                        if (vartype == "array" || arrayDi.ContainsKey(varnam)) // 
                         {
+                           // Debug(varnam + "is array.");
                             Cup shape = Run(hi + 2, 0);
                             Cup q = Run(shape.hi + 1, 0);
                             foreach (string cvarnam in eqlvarnams)
                             {
+                                //Debug("modifying " + cvarnam);
+                                if (!arrayDi.ContainsKey(cvarnam)) continue; // 只是一个虚拟的数组名字
                                 if (shape.d.Count == 0)
                                 {
                                     arrayDi[cvarnam] = ToInt(q.d[0]);
@@ -515,7 +532,7 @@ namespace epsizizyS_sharp_
                                     for (int i = 0; i < shape.d.Count; i++)
                                     {
                                         pos += ToInt(shape.d[i]);
-                                        if (i != shape.d.Count - 1) pos *= arrayShape[varnam][i + 1];
+                                        if (i != shape.d.Count - 1) pos *= arrayShape[cvarnam][i + 1];
                                     }
                                     pos += arrayDi[cvarnam];
                                     arrayData[pos] = q;
