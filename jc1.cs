@@ -204,6 +204,7 @@ namespace epsizizyS_sharp_
         string[] stringarr = new string[1000000];
         Cup[] arrayData = new Cup[100000000];
         int arrayDataUsedCount = 0;
+        int autoSelf = 0;
         Form4 f4;
 
         /*
@@ -233,7 +234,18 @@ namespace epsizizyS_sharp_
                                // Debug(ch);
             try
             {
-
+                if(ch == "__config")
+                {
+                    string cf = h[hi + 1];
+                    if(fbd == 0)
+                    {
+                        if(cf == "autoself")
+                        {
+                            autoSelf = 1;
+                        }
+                    }
+                    return new Cup(hi + 1);
+                }
 
                 if (ch == "begin" || ch == "{" || ch == "seq")
                 {
@@ -564,8 +576,18 @@ namespace epsizizyS_sharp_
                 if (funcHi.ContainsKey(ch))
                 {
                     //if (ch == "a") Debug("considering ch " + ch);
-
-                    Cup p = (funcParamNam[ch].Count == 0 ? new Cup(hi) : Run(hi + 1, fbd));
+                    Cup p = new Cup(hi);
+                    if(autoSelf == 1)
+                    {
+                        string vnam = "__virtual_varnam";
+                        if(ch.Contains('.'))
+                        {
+                            string tmp = prevBed(ch);
+                            vnam = tmp.Remove(tmp.Length - 1);
+                        }
+                        p = new Cup(hi, vnam);
+                    }
+                    p.Add(funcParamNam[ch].Count == autoSelf ? new Cup(hi) : Run(hi + 1, fbd));
                     if (fbd == 1) return new Cup(p.hi);
                     string obedstack = bedStack;
                     bedStack += ch + ".";
@@ -946,6 +968,10 @@ namespace epsizizyS_sharp_
                         funcnam = bedStack + h[hi + 1];
                     }
                     funcParamNam[funcnam] = new List<string>();
+                    if(autoSelf == 1)
+                    {
+                        funcParamNam[funcnam].Add("&self");
+                    }
                     hi = hi + 3;
                     for (; ; )
                     {
